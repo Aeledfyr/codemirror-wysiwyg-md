@@ -1,0 +1,5 @@
+/node_modules
+/.pnpm-store
+*.bundle.js
+oss-licenses.json
+pnpm-lock.yaml

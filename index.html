@@ -1,0 +1,207 @@
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<div id="main">
+  <div id="chat-wrapper">
+  <div id="chat"><!--
+    --><div>Try the text input below!</div><!--
+    --><div>Completable users: Aeledfyr (display name "Nickname"); Completable channels: #General; Completable emojis: :smile:, :heart:, :cat:</div><!--
+    --><div>(the chat area shows the raw text that be submitted; this may need post-processing for unicode emoji names.)</div><!--
+    --><div>Known issues:<!--
+      --><ul><!--
+        --><li>Codemirror's completion doesn't support aliases by default, so searching users by both display name and username will take a bit more work.<br>(This is why the same user is currently listed twice.)</li><!--
+        --><li><del>The cursor has weird vertical alignment on lines with only emojis</del> (Fixed)</li><!--
+        --><li><del>Autocompletion and emoji rendering aren't prevented in inline code and code blocks</del> (Fixed)</li><!--
+        --><li><del>Code blocks don't prevent enter from sending the current message</del> (Fixed)</li><!--
+      --></ul><!--
+    --></div><!--
+    --><div>Typing \ before any custom widget shows the raw text representation.</div><!--
+  --></div>
+  </div>
+  <div id="compose">
+    <div id="codemirror"></div>
+    <div id="controls">
+      <button id="send">Send</button>
+    </div>
+  </div>
+</div>
+<script type="module">
+  console.log("Codemirror component loaded");
+
+  import { attachedEditorView } from "./editor.bundle.js";
+  let editor = attachedEditorView(window.codemirror, (value) => {
+    sendMessage(value);
+
+    let state = editor.state;
+    let trans = state.update({changes: {from: 0, to: state.doc.length, insert: ""}})
+    editor.dispatch(trans);
+  }, "", "Message #general");
+
+  function sendMessage(string) {
+    let div = document.createElement("div");
+    div.textContent = string;
+    document.querySelector("#chat").appendChild(div);
+  }
+
+  document.querySelector("#send").addEventListener("click", () => {
+    let value = editor.state.doc.toString();
+    sendMessage(value);
+
+    let state = editor.state;
+    let trans = state.update({changes: {from: 0, to: state.doc.length, insert: ""}})
+    editor.dispatch(trans);
+  });
+</script>
+<style>
+  #main {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  #compose {
+    display: flex;
+    flex-direction: row;
+  }
+  #codemirror {
+    flex-grow: 1;
+  }
+
+  #chat-wrapper {
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: scroll;
+
+    flex-grow: 1;
+    margin-bottom: 10px;
+    word-break: break-word;
+
+    overflow-x: hidden; /* hack */
+
+    white-space: pre-wrap;
+  }
+  #chat > *:not(:last-child) {
+    border-bottom: 1px solid #CCC;
+  }
+  #chat > * {
+    white-space: pre-wrap;
+  }
+  #chat {
+    margin-top: 2rem;
+  }
+  #send {
+    aspect-ratio: 1.25/1;
+    width: 3em;
+    padding: 0;
+  }
+</style>
+
+
+<style>
+  :root {
+    /* --color-editor-bg: rgba(255, 255, 255, 0.2); */
+    /* --color-editor-bg: color-mix(in srgb, var(--color-bg, white), white 20%); */
+    --color-editor-bg: var(--color-bg, #FFF);
+    --color-editor-fg: var(--color-code-fg, #000);
+    --color-editor-border: var(--color-code-border, #CCC);
+    --color-editor-cursor: var(--color-code-fg, #000);
+    --color-editor-selection-fg: HighlightText;
+    --color-editor-selection-bg: Highlight;
+
+    display: block;
+    margin: 0.5rem 0;
+  }
+  @supports (color: color-mix(in srgb, red, white 50%)) {
+      :root {
+          /* --color-editor-fg: color-mix(in srgb, red, white 50%); */
+          /* --color-editor-bg: color-mix(in srgb, var(--color-bg, white), white 20%); */
+      }
+  }
+  .cm-editor:not(.cm-focused) > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-editor.cm-editor:not(.cm-focused) .cm-content ::selection {
+    background-color: #DDD;
+  }
+  @media (prefers-color-scheme: dark) {
+    .cm-editor:not(.cm-focused) > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-editor.cm-editor:not(.cm-focused) .cm-content ::selection {
+      background-color: #999;
+    }
+  }
+  .cm-editor {
+    border: 2px solid var(--color-editor-border);
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+  .cm-editor.cm-editor:focus-within { /* CodeMirror doesn't support focus-visible? */
+      outline: 5px auto Highlight;
+      outline: 5px auto -webkit-focus-ring-color;
+  }
+  /* TODO: fix this by forking codemirror/markdown? (similar with a single "-" heading)*/
+  /* Prevent a single '#' from immediately displaying as a heading */
+  .md-h1:first-child:last-child {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  .md-h1 { font-size: 2.00em; font-weight: 900; }
+  .md-h2 { font-size: 1.50em; font-weight: bold; }
+  .md-h3 { font-size: 1.17em; font-weight: bold; }
+  .md-h4 { font-size: 1.00em; font-weight: bold; }
+  .md-h5 { font-size: 0.83em; font-weight: bold; }
+  .md-h6 { font-size: 0.67em; font-weight: bold; }
+  .md-meta-atom {
+    font-family: monospace, monospace;
+  }
+  .md-meta.md-list { font-family: monospace, monospace; font-weight: bold; opacity: 0.5; }
+  .md-emph { font-style: italic; }
+  .md-bold { font-weight: bold; }
+  .md-link { text-decoration: underline; }
+  .md-strikethrough {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-decoration-thickness: 2px;
+  }
+  .md-hr { font-weight: bold; }
+  .md-code {
+    font-family: monospace, monospace;
+  }
+  .md-comment {
+    color: #082;
+  }
+
+  /* :root(.limit-height) .cm-scroller {
+    overflow-y: auto;
+  }
+  :root(.limit-height) .cm-editor {
+    max-height: var(--cm-max-height, 8em);
+  } */
+</style>
+
+<!-- <style>
+  #alt .cm-line {
+    font-family: Noto Sans;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  #alt .cm-emoji-widget {
+    width: auto;
+    height: 1lh;
+    display: inline-block;
+    vertical-align: baseline;
+  }
+  #alt .cm-emoji-widget > img {
+    width: 1.375em;
+    height: 1.375em;
+    object-fit: contain;
+    vertical-align: bottom;
+  }
+  #alt .cm-emoji {
+    width: 1.375em;
+    height: 1.375em;
+    display: inline-block;
+    vertical-align: baseline;
+  }
+  #alt span {
+    vertical-align: baseline;
+  }
+</style>
+<div id="alt">
+  <div class="cm-line">abc <img class="cm-emoji" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg"> jkl</div>
+  <div class="cm-line">abc <span class="cm-emoji-widget"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg"></span> jkl</div>
+  <div class="cm-line"><span>abc </span><span class="cm-emoji-widget"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg"></span><span> jkl</span></div>
+</div> -->
